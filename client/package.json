@@ -23,7 +23,9 @@
     "react-strap-table": "^1.0.7",
     "react-table": "^6.11.0",
     "reactstrap": "^8.5.1",
-    "styled-components": "^5.1.1"
+    "styled-components": "^5.1.1",
+    "sweetalert2": "^10.0.2",
+    "sweetalert2-react-content": "^3.2.0"
   },
   "scripts": {
     "start": "set PORT=3010 && react-scripts start",

@@ -68,7 +68,7 @@ updateOrder = async (req, res) => {
             })
             .catch(error => {
                 return res.status(404).json({
-                    error,
+                    errormsg: error.message,
                     message: 'Order not updated!',
                 })
             })

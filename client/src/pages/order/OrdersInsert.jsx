@@ -1,5 +1,7 @@
 import React, { Component } from 'react'
 import api from '../../api/api-server'
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 import styled from 'styled-components'
 
 const Title = styled.h1.attrs({
@@ -53,16 +55,35 @@ class OrdersInsert extends Component {
         let fields = this.state.fields;
         let errors = {};
         let formIsValid = true;
-        //Name
+        
         if(!fields["name"]){
             formIsValid = false;
             errors["name"] = "Cannot be empty";
         }
 
+        if(!fields["size"]){
+            formIsValid = false;
+            errors["size"] = "Cannot be empty";
+        }
+
+        if(!fields["quantity"]){
+            formIsValid = false;
+            errors["quantity"] = "Cannot be empty";
+        }
+
+        if(!fields["destination"]){
+            formIsValid = false;
+            errors["destination"] = "Cannot be empty";
+        }
+
+        if(!fields["travellingexpenses"]){
+            formIsValid = false;
+            errors["travellingexpenses"] = "Cannot be empty";
+        }
+
         this.setState({ errors: errors });
         return formIsValid;
     }
-
 
     handleChangeInputItemName = async (field, event) => {
         let fields = this.state.fields;
@@ -71,22 +92,30 @@ class OrdersInsert extends Component {
         this.setState({ itemname, fields })
     }
 
-    handleChangeInputItemSize = async event => {
+    handleChangeInputItemSize = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
         const itemsize = event.target.value
         this.setState({ itemsize })
     }
     
-    handleChangeInputItemQuantity = async event => {
+    handleChangeInputItemQuantity = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
         const itemquantity = event.target.value
         this.setState({ itemquantity })
     }
     
-    handleChangeInputItemDestination = async event => {
+    handleChangeInputItemDestination = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
         const itemdestination = event.target.value
         this.setState({ itemdestination })
     }
 
-    handleChangeInputTravellingExpenses = async event => {
+    handleChangeInputTravellingExpenses = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
         const travellingexpenses = event.target.value
         this.setState({ travellingexpenses })
     }
@@ -96,11 +125,15 @@ class OrdersInsert extends Component {
         const payload = { itemname, itemsize, itemquantity, itemdestination, travellingexpenses }
         this.handleValidation()
         await api.insertOrder(payload).then(res => {
-            console.log(res)
-            window.alert(`Order created successfully`);
-            window.location = '/orders/list';
+            const MySwal = withReactContent(Swal)
+            MySwal.fire({
+                title: <p>{res.data.message}</p>,
+                onClose: () => {
+                    window.location = '/orders/list';
+                }
+            })
         }).catch(error => {
-
+            console.log(error.response.data.errormsg)
         })
     }
 
@@ -122,30 +155,34 @@ class OrdersInsert extends Component {
                 <InputText
                     type="text"
                     value={itemsize}
-                    onChange={this.handleChangeInputItemSize}
+                    onChange={this.handleChangeInputItemSize.bind(this, "size")}
                 />
-
+                <span style={{color: "red"}}>{this.state.errors["size"]}</span>
+                <br/>
                 <Label>Quantity: </Label>
                 <InputText
                     type="text"
                     value={itemquantity}
-                    onChange={this.handleChangeInputItemQuantity}
+                    onChange={this.handleChangeInputItemQuantity.bind(this, "quantity")}
                 />
-
+                <span style={{color: "red"}}>{this.state.errors["quantity"]}</span>
+                <br/>
                 <Label>Destination: </Label>
                 <InputText
                     type="text"
                     value={itemdestination}
-                    onChange={this.handleChangeInputItemDestination}
+                    onChange={this.handleChangeInputItemDestination.bind(this, "destination")}
                 />
-
+                <span style={{color: "red"}}>{this.state.errors["destination"]}</span>
+                <br/>
                 <Label>Travelling Expenses: </Label>
                 <InputText
                     type="text"
                     value={travellingexpenses}
-                    onChange={this.handleChangeInputTravellingExpenses}
+                    onChange={this.handleChangeInputTravellingExpenses.bind(this, "travellingexpenses")}
                 />
-                
+                <span style={{color: "red"}}>{this.state.errors["travellingexpenses"]}</span>
+                <br/>
                 <Button onClick={this.handleIncludeOrder}>Add Order</Button>
                 <CancelButton href={'/orders/list'}>Cancel</CancelButton>
             </Wrapper>

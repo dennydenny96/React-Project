@@ -5,10 +5,10 @@ const Schema = mongoose.Schema
 const Order = new Schema(
     {
         itemname: { type: String, required: true },
-        itemsize: { type: Number, required: true },
-        itemquantity: { type: Number, required: true },
+        itemsize: { type: String, required: true },
+        itemquantity: { type: String, required: true },
         itemdestination: { type: String, required: true },
-        travellingexpenses: { type: Number, required: true },
+        travellingexpenses: { type: String, required: true },
     },
     { timestamps: true },
 )

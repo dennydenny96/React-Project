@@ -43,13 +43,32 @@ class OrdersInsert extends Component {
             itemsize: '',
             itemquantity: '',
             itemdestination: '',
-            travellingexpenses: ''
+            travellingexpenses: '',
+            fields: {},
+            errors: {}
         }
     }
 
-    handleChangeInputItemName = async event => {
+    handleValidation(){
+        let fields = this.state.fields;
+        let errors = {};
+        let formIsValid = true;
+        //Name
+        if(!fields["name"]){
+            formIsValid = false;
+            errors["name"] = "Cannot be empty";
+        }
+
+        this.setState({ errors: errors });
+        return formIsValid;
+    }
+
+
+    handleChangeInputItemName = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;        
         const itemname = event.target.value
-        this.setState({ itemname })
+        this.setState({ itemname, fields })
     }
 
     handleChangeInputItemSize = async event => {
@@ -75,13 +94,13 @@ class OrdersInsert extends Component {
     handleIncludeOrder = async () => {
         const { itemname, itemsize, itemquantity, itemdestination, travellingexpenses } = this.state
         const payload = { itemname, itemsize, itemquantity, itemdestination, travellingexpenses }
-        
+        this.handleValidation()
         await api.insertOrder(payload).then(res => {
             console.log(res)
             window.alert(`Order created successfully`);
             window.location = '/orders/list';
         }).catch(error => {
-            console.log(error)
+
         })
     }
 
@@ -95,9 +114,10 @@ class OrdersInsert extends Component {
                 <InputText
                     type="text"
                     value={itemname}
-                    onChange={this.handleChangeInputItemName}
+                    onChange={this.handleChangeInputItemName.bind(this, "name")}
                 />
-
+                <span style={{color: "red"}}>{this.state.errors["name"]}</span>
+                <br/>
                 <Label>Size: </Label>
                 <InputText
                     type="text"

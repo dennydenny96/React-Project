@@ -27,11 +27,8 @@ createOrder = async (req, res) => {
             })
         })
         .catch(error => {
-            Object.keys(error.errors).map((element)=>{
-                console.log(error.errors[element].properties)
-            })
             return res.status(400).json({
-                error,
+                errormsg: error.message,
                 message: 'Order not created!',
             })
         })

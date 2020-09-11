@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import ReactTable from "react-table";
 import api from '../../api/api-server';
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 import styled from 'styled-components';
 import "react-table/react-table.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { filterFunction } from '../../helpers/functions'
+import { filterFunction, toCurrency } from '../../helpers/functions'
 
 const Toolbars = styled.div.attrs({
     className: `row`
@@ -66,15 +68,22 @@ class UpdateOrder extends Component {
 class DeleteOrder extends Component {
     deleteOrder = event => {
         event.preventDefault()
-        
-        if (
-            window.confirm(
-                `Do tou want to delete the order ---"${this.props.itemname}"--- permanently?`,
-            )
-        ) {
-            api.deleteOrderById(this.props.id)
-            window.location.reload()
-        }
+        const MySwal = withReactContent(Swal)
+        MySwal.fire({
+            title: `Do tou want to delete the order ${this.props.customername} permanently?`,
+            showCancelButton: true,
+            confirmButtonText: `Delete`,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                api.deleteOrderById(this.props.id);
+                MySwal.fire({
+                    title: `Delete ${this.props.customername} success!`,
+                    onClose: () => {
+                        window.location.reload()
+                    }
+                });
+            }
+        })
     }
 
     render() {
@@ -123,34 +132,57 @@ class OrdersList extends Component {
 
         const columns = [
             {
-                Header: 'Name',
-                accessor: 'itemname',
+                Header: "No",
+                maxWidth: 50,
+                filterable: false,
+                className: 'text-center',
+                Cell: (row) => {
+                  return <div>{row.index+1}</div>;
+                }
+            },
+            {
+                Header: 'Customer',
+                accessor: 'customername',
                 filterable: true,
                 Filter: cell => (filterFunction(cell))
             },
             {
-                Header: 'Size',
-                accessor: 'itemsize',
+                Header: 'Qty',
+                accessor: 'quantity',
                 filterable: true,
+                className: 'text-center',
                 Filter: cell => (filterFunction(cell))
             },
             {
-                Header: 'Quantity',
-                accessor: 'itemquantity',
+                Header: 'Container Size',
+                accessor: 'containersize',
                 filterable: true,
                 Filter: cell => (filterFunction(cell))
             },
             {
                 Header: 'Destination',
-                accessor: 'itemdestination',
+                accessor: 'destination',
                 filterable: true,
                 Filter: cell => (filterFunction(cell))
             },
             {
-                Header: 'Travelling Expenses',
-                accessor: 'travellingexpenses',
+                Header: 'Price',
+                accessor: 'price',
                 className: 'text-right',
                 filterable: true,
+                Cell: (props) => {
+                    return <div>{toCurrency(props.value)}</div>;
+                },
+                Filter: cell => (filterFunction(cell))
+            },
+            {
+                Header: 'Reimbursement',
+                accessor: 'reimbursement',
+                className: 'text-right',
+                filterable: true,
+                Cell: (props) => {
+                    return <div>{toCurrency(props.value)}</div>;
+                },
                 Filter: cell => (filterFunction(cell))
             },
             {
@@ -165,7 +197,7 @@ class OrdersList extends Component {
                     return (
                         <span>
                             <UpdateOrder id={props.original._id} />
-                            <DeleteOrder id={props.original._id} itemname={props.original.itemname} />
+                            <DeleteOrder id={props.original._id} customername={props.original.customername} />
                         </span> 
                     )
                 },

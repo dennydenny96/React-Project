@@ -1,29 +1,28 @@
-const Order = require('../models/order-model')
+const Customer = require('../models/customer-model')
 const { response } = require('express');
-var assert = require('assert');
 
-createOrder = async (req, res) => {
+createCustomer = async (req, res) => {
     const body = req.body
     if (!body) {
         return res.status(400).json({
             success: false,
-            error: 'You must provide a order',
+            error: 'You must provide a customer',
         })
     }
 
-    const order = new Order(body)
+    const customer = new Customer(body)
 
-    if (!order) {
+    if (!customer) {
         return res.status(400).json({ success: false, error: err })
     }
         
-    order
+    customer
         .save()
         .then(() => {
             return res.status(201).json({
                 success: true,
-                id: order._id,
-                message: 'Order created successfully!',
+                id: customer._id,
+                message: 'Customer created successfully!',
             })
         })
         .catch(error => {
@@ -36,12 +35,12 @@ createOrder = async (req, res) => {
             return res.status(400).json({
                 error,
                 errMessages,
-                message: 'Order not created!',
+                message: 'Customer not created!',
             })
         })
 }
 
-updateOrder = async (req, res) => {
+updateCustomer = async (req, res) => {
     const body = req.body
 
     if (!body) {
@@ -51,27 +50,26 @@ updateOrder = async (req, res) => {
         })
     }
 
-    Order.findOne({ _id: req.params.id }, (err, order) => {
+    Customer.findOne({ _id: req.params.id }, (err, customer) => {
         if (err) {
             return res.status(404).json({
                 err,
-                message: 'Order not found!',
+                message: 'Customer not found!',
             })
         }
 
-        order.customername = body.customername
-        order.quantity = body.quantity
-        order.containersize = body.containersize
-        order.destination = body.destination
-        order.price = body.price;
-        order.reimbursement = body.reimbursement;
-        order
+        customer.customername = body.customername
+        customer.destination = body.destination
+        customer.price = body.price
+        customer.reimbursement = body.reimbursement
+        
+        customer
             .save()
             .then(() => {
                 return res.status(200).json({
                     success: true,
-                    id: order._id,
-                    message: 'Order updated!',
+                    id: customer._id,
+                    message: 'Customer updated!',
                 })
             })
             .catch(error => {
@@ -80,47 +78,79 @@ updateOrder = async (req, res) => {
                     const { message, path } = error.errors[element].properties;
                     errMessages[path] = message
                 })
+                
                 return res.status(400).json({
                     error,
                     errMessages,
-                    message: 'Order not updated!',
+                    message: 'Customer not created!',
                 })
             })
     })
 }
 
-deleteOrder = async (req, res) => {
-    await Order.findOneAndDelete({ _id: req.params.id }, (err, order) => {
+deleteCustomer = async (req, res) => {
+    await Customer.findOneAndDelete({ _id: req.params.id }, (err, customer) => {
         if (err) {
             return res.status(400).json({ success: false, error: err })
         }
 
-        if (!order) {
+        if (!customer) {
             return res
                 .status(404)
-                .json({ success: false, error: `Order not found` })
+                .json({ success: false, error: `Customer not found` })
         }
 
-        return res.status(200).json({ success: true, data: order })
+        return res.status(200).json({ success: true, data: customer })
     }).catch(err => console.log(err))
 }
 
-getOrderById = async (req, res) => {
-    await Order.findOne({ _id: req.params.id }, (err, order) => {
+getCustomerById = async (req, res) => {
+    await Customer.findOne({ _id: req.params.id }, (err, customer) => {
         if (err) {
             return res.status(400).json({ success: false, error: err })
         }
 
-        if (!order) {
+        if (!customer) {
             return res
                 .status(404)
-                .json({ success: false, error: `Order not found` })
+                .json({ success: false, error: `Customer not found` })
         }
-        return res.status(200).json({ success: true, data: order })
+        return res.status(200).json({ success: true, data: customer })
     }).catch(err => console.log(err))
 }
 
-getOrders = async (req, res) => {
+getCustomersDistinct = async (req, res) =>{
+    const body = req.query;
+    await Customer.distinct(body.filtered, (err, customers) => {
+        if(err){
+            return res.status(400).json({ success: false, error: err})
+        }
+        if (!customers.length) {
+            return res
+                .status(404)
+                .json({ success: false, error: `Customers not found` })
+        }
+        return res.status(200).json({ success: true, data: customers })
+    }).catch(err => console.log(err))
+}
+
+getCustomerByName = async (req, res) => {
+    const body = req.query;
+    await Customer.find(JSON.parse(body.filtered), (err, customer) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
+
+        if (!customer) {
+            return res
+                .status(404)
+                .json({ success: false, error: `Customer not found` })
+        }
+        return res.status(200).json({ success: true, data: customer})
+    }).catch(err => console.log(err))
+}
+
+getCustomers = async (req, res) => {
     try{
         const body = req.query;
         const resPerPage = parseInt(body.pageSize); // results per page
@@ -140,28 +170,27 @@ getOrders = async (req, res) => {
         const parseSorted = JSON.parse(sorted)
         const sortedId = parseSorted.id;
         const sortedBy = (parseSorted.desc != undefined) ? parseSorted.desc ? "desc" : "asc" : undefined;
-        const foundOrders = await Order.find(findLike)
+        const foundCustomers = await Customer.find(findLike)
             .sort({
                 [sortedId]: sortedBy
             })
             .skip((pages) * resPerPage)
             .limit(resPerPage);
         
-        const dataOrders = foundOrders.length > 0 ? foundOrders : [{}];
-        const numOfOrders = await Order.countDocuments();
-        return res.status(200).json({ success: true, data: dataOrders, pages: Math.ceil(numOfOrders / resPerPage), recordsTotal: numOfOrders})
+        const dataCustomers = foundCustomers.length > 0 ? foundCustomers : [{}];
+        const numOfCustomers = await Customer.countDocuments();
+        return res.status(200).json({ success: true, data: dataCustomers, pages: Math.ceil(numOfCustomers / resPerPage), recordsTotal: numOfCustomers})
     } catch (err){
         throw new Error(err);
     }
 }
 
-
-
-
 module.exports = {
-    createOrder,
-    updateOrder,
-    deleteOrder,
-    getOrders,
-    getOrderById,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer,
+    getCustomers,
+    getCustomerById,
+    getCustomersDistinct,
+    getCustomerByName
 }

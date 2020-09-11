@@ -1,6 +1,9 @@
 import React, { Component } from 'react'
 import api from '../../api/api-server'
-
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+import { Combobox } from 'react-widgets'
+import 'react-widgets/dist/css/react-widgets.css';
 import styled from 'styled-components'
 
 const Title = styled.h1.attrs({
@@ -41,46 +44,120 @@ class OrdersUpdate extends Component {
 
         this.state = {
             id: this.props.match.params.id,
-            itemname: '',
-            itemsize: '',
-            itemquantity: '',
-            itemdestination: '',
-            travellingexpenses: ''
+            customername: '',
+            quantity: '',
+            containersize: '',
+            destination: '',
+            price: '',
+            reimbursement: '',
+            fields: {},
+            errors: {},
+            customers: [],
+            destinations:[],
+            prices: []
         }
     }
-
-    handleChangeInputItemName = async event => {
-        const itemname = event.target.value
-        this.setState({ itemname })
-    }
-
-    handleChangeInputItemSize = async event => {
-        const itemsize = event.target.value
-        this.setState({ itemsize })
-    }
     
-    handleChangeInputItemQuantity = async event => {
-        const itemquantity = event.target.value
-        this.setState({ itemquantity })
-    }
-    
-    handleChangeInputItemDestination = async event => {
-        const itemdestination = event.target.value
-        this.setState({ itemdestination })
+    handleValidation(msg, stateFields){
+        let fields = this.state.fields;
+        let errors = {};
+        let formIsValid = true;
+        
+        stateFields.map((element, index)=>{
+            if(!fields[element]){
+                formIsValid = false;
+                errors[element] = msg[element]
+            }
+            return index;
+        })
+
+        this.setState({ errors: errors });
+        return formIsValid;
     }
 
-    handleChangeInputTravellingExpenses = async event => {
-        const travellingexpenses = event.target.value
-        this.setState({ travellingexpenses })
+    handleChangeInputCustomerName = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event;        
+        const customername = event;
+        let payload = { filtered: {"customername": event}}
+        await api.getCustomerByName(payload).then(customerDetails => {
+            let getCustomersDestination = []
+            customerDetails.data.data.map((element, index)=>{
+                getCustomersDestination.push(element.destination)
+                return index;
+            })
+            this.setState({
+                destinations: getCustomersDestination,
+                customername, 
+                fields
+            })
+            this.handleChangeInputDestination("destination", getCustomersDestination[0])
+        })
+    }
+
+    handleChangeInputQuantity = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
+        const quantity = event.target.value
+        this.setState({ quantity, fields })
     }
     
+    handleChangeInputContainerSize = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
+        const containersize = event.target.value
+        this.setState({ containersize, fields })
+    }
+    
+    handleChangeInputDestination = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event;
+        const destination = event
+        let payload = { filtered: {"customername": this.state.customername, "destination": event}}
+        await api.getCustomerByName(payload).then(customerDetails => {
+            let getCustomersPrice = []
+            customerDetails.data.data.map((element, index)=>{
+                getCustomersPrice.push(element.price)
+                return index;
+            })
+            this.setState({
+                prices: getCustomersPrice,
+                price: getCustomersPrice[0],
+                fields
+            })
+        })
+        this.setState({ destination, fields })
+    }
+
+    handleChangeInputPrice = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event;
+        const price = event;
+        this.setState({ price, fields })
+    }
+    
+    handleChangeInputReimbursement = async (field, event) => {
+        let fields = this.state.fields;
+        fields[field] = event.target.value;
+        const reimbursement = event.target.value
+        this.setState({ reimbursement, fields })
+    }
+
     handleUpdateOrder = async () => {
-        const { id, itemname, itemsize, itemquantity, itemdestination, travellingexpenses } = this.state
-        const payload = { itemname, itemsize, itemquantity, itemdestination, travellingexpenses }
-
+        const { id, customername, quantity, containersize, destination, price, reimbursement } = this.state
+        const payload = { customername, quantity, containersize, destination, price, reimbursement }
+        console.log(price)
         await api.updateOrderById(id, payload).then(res => {
-            window.alert(`Order updated successfully`);
-            window.location = '/orders/list';
+            const MySwal = withReactContent(Swal)
+            MySwal.fire({
+                title: res.data.message,
+                onClose: () => {
+                    window.location = '/orders/list';
+                }
+            })
+        }).catch(error => {
+            this.handleValidation(error.response.data.errMessages, 
+                ["customername", "quantity", "containersize", "destination", "price", "reimbursement"])
         })
     }
 
@@ -89,55 +166,98 @@ class OrdersUpdate extends Component {
         const order = await api.getOrderById(id)
 
         this.setState({
-            itemname: order.data.data.itemname,
-            itemsize: order.data.data.itemsize,
-            itemquantity: order.data.data.itemquantity,
-            itemdestination: order.data.data.itemdestination,
-            travellingexpenses: order.data.data.travellingexpenses,
+            customername: order.data.data.customername,
+            quantity: order.data.data.quantity,
+            containersize: order.data.data.containersize,
+            destination: order.data.data.destination,
+            price: order.data.data.price,
+            reimbursement: order.data.data.reimbursement
         })
+
+        let payload = { filtered: "customername"}
+        await api.getCustomersDistinct(payload).then(customers => {
+            this.setState({
+                customers: customers.data.data
+            })
+        })
+        this.handleChangeInputCustomerName("customername", this.state.customername)
     }
 
     render() {
-        const { itemname, itemsize, itemquantity, itemdestination, travellingexpenses } = this.state
+        const { customers, destinations, prices, quantity, containersize, reimbursement } = this.state
         return (
             <Wrapper>
                 <Title>Update Order</Title>
 
-                <Label>Name: </Label>
+                <Label>Customer: </Label>
+                <Combobox
+                data={customers}
+                value={this.state.customername}
+                // defaultValue={customers[0]}
+                textField='customername'
+                caseSensitive={false}
+                minLength={1}
+                onChange={this.handleChangeInputCustomerName.bind(this, "customername")}
+                filter='contains'
+                />
+                <span style={{color: "red"}}>{this.state.errors["customername"]}</span>
+                <br/>
+                
+                <Label>Qty: </Label>
                 <InputText
                     type="text"
-                    value={itemname}
-                    onChange={this.handleChangeInputItemName}
+                    value={quantity}
+                    onChange={this.handleChangeInputQuantity.bind(this, "quantity")}
                 />
+                <span style={{color: "red"}}>{this.state.errors["quantity"]}</span>
+                <br/>
 
-                <Label>Size: </Label>
+                <Label>Container Size: </Label>
                 <InputText
                     type="text"
-                    value={itemsize}
-                    onChange={this.handleChangeInputItemSize}
+                    value={containersize}
+                    onChange={this.handleChangeInputContainerSize.bind(this, "containersize")}
                 />
-
-                <Label>Quantity: </Label>
-                <InputText
-                    type="text"
-                    value={itemquantity}
-                    onChange={this.handleChangeInputItemQuantity}
-                />
+                <span style={{color: "red"}}>{this.state.errors["containersize"]}</span>
+                <br/>
 
                 <Label>Destination: </Label>
+                <Combobox
+                disabled
+                data={destinations}
+                value={this.state.destination}
+                defaultValue={destinations[0]}
+                textField='destination'
+                caseSensitive={false}
+                minLength={1}
+                onChange={this.handleChangeInputDestination.bind(this, "destination")}
+                filter='contains'
+                />
+                <span style={{color: "red"}}>{this.state.errors["destination"]}</span>
+                <br/>
+
+                <Label>Price: </Label>
+                <Combobox
+                data={prices}
+                value={this.state.price}
+                defaultValue={prices[0]}
+                textField='price'
+                caseSensitive={false}
+                minLength={1}
+                onChange={this.handleChangeInputPrice.bind(this, "price")}
+                filter='contains'
+                />
+                <span style={{color: "red"}}>{this.state.errors["price"]}</span>
+                <br/>
+                <Label>Reimbursement: </Label>
                 <InputText
                     type="text"
-                    value={itemdestination}
-                    onChange={this.handleChangeInputItemDestination}
+                    value={reimbursement}
+                    onChange={this.handleChangeInputReimbursement.bind(this, "reimbursement")}
                 />
-
-                <Label>Travelling Expenses: </Label>
-                <InputText
-                    type="text"
-                    value={travellingexpenses}
-                    onChange={this.handleChangeInputTravellingExpenses}
-                />
-
+                <span style={{color: "red"}}>{this.state.errors["reimbursement"]}</span>
+                <br/>
+                
                 <Button onClick={this.handleUpdateOrder}>Update Order</Button>
                 <CancelButton href={'/orders/list'}>Cancel</CancelButton>
             </Wrapper>

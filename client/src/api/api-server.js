@@ -10,6 +10,14 @@ export const updateUserById = (id, payload) => api.put(`/user/${id}`, payload)
 export const deleteUserById = id => api.delete(`/user/${id}`)
 export const getUserById = id => api.get(`/user/${id}`)
 
+export const insertCustomer = payload => api.post(`/customer`, payload)
+export const getAllCustomers = (payload) => api.get(`/customers`,  { params:payload })
+export const getCustomersDistinct = (payload) => api.get(`/customers/distinct`,  { params:payload })
+export const getCustomerByName = (payload) => api.get(`/customers/destination`,  { params:payload })
+export const updateCustomerById = (id, payload) => api.put(`/customer/${id}`, payload)
+export const deleteCustomerById = id => api.delete(`/customer/${id}`)
+export const getCustomerById = id => api.get(`/customer/${id}`)
+
 export const insertOrder = payload => api.post(`/order`, payload)
 export const getAllOrders = (payload) => api.get(`/orders`,  { params:payload })
 export const updateOrderById = (id, payload) => api.put(`/order/${id}`, payload)
@@ -23,6 +31,14 @@ const apis = {
     updateUserById,
     deleteUserById,
     getUserById,
+    // ---------------- Customer ----------------
+    insertCustomer,
+    getAllCustomers,
+    getCustomersDistinct,
+    getCustomerByName,
+    updateCustomerById,
+    deleteCustomerById,
+    getCustomerById,
     // ---------------- Order ----------------
     insertOrder,
     getAllOrders,

@@ -50,7 +50,7 @@ updateUser = async (req, res) => {
         
     const hashPassword = await bcrypt.hash(body.password, saltRounds);
 
-    User.findOne({ _id: req.params.id }, (err, user) => {
+    User.findOne({ _id: req.params.id }, (err, user) => {        
         if (err) {
             return res.status(404).json({
                 err,
